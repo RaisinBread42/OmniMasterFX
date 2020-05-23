@@ -1,0 +1,32 @@
+
+# To add a new migration
+Add-Migration -Name <name> -context ApplicationDbContext
+
+# to update database to latest migration
+Update-Database
+
+# roll back to specified target migration
+Update-Database --context <ApplicationDbContext or AuthetnucationDbContext> <migration name>
+
+# script migrations
+Script-Migration <name>
+
+
+CLI Reference
+
+Arguments:
+  <MIGRATION>  The target migration. If '0', all migrations will be reverted. Defaults to the last migration.
+
+Options:
+  -c|--context <DBCONTEXT>      The DbContext to use.
+  -a|--assembly <PATH>          The assembly to use.
+  -s|--startup-assembly <PATH>  The startup assembly to use. Defaults to the target assembly.
+  --data-dir <PATH>             The data directory.
+  --project-dir <PATH>          The project directory. Defaults to the current directory.
+  --root-namespace <NAMESPACE>  The root namespace. Defaults to the target assembly name.
+  --language <LANGUAGE>         The language. Defaults to 'C#'.
+  --working-dir <PATH>          The working directory of the tool invoking this command.
+  -h|--help                     Show help information
+  -v|--verbose                  Show verbose output.
+  --no-color                    Don't colorize output.
+  --prefix-output               Prefix output with level.
