@@ -14,47 +14,27 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Diagnostics;
 
 namespace OmniMasterFX.Infrastructure.Persistence
 {
-    public class ApplicationDbContext : DbContext, IApplicationDbContext
+    public class AuthDbContext : ApiAuthorizationDbContext<ApplicationUser>, IAuthDbContext
     {
         private readonly ICurrentUserService _currentUserService;
         private readonly IDateTime _dateTime;
         private IDbContextTransaction _currentTransaction;
 
-        public ApplicationDbContext(): base() { }
-        public ApplicationDbContext(DbContextOptions options) : base(options) { }
+        public AuthDbContext(DbContextOptions options, IOptions<OperationalStoreOptions> operationalStoreOptions) : base(options, operationalStoreOptions) { }
 
-
-        public ApplicationDbContext(
+        public AuthDbContext(
             DbContextOptions options,
             IOptions<OperationalStoreOptions> operationalStoreOptions,
             ICurrentUserService currentUserService,
-            IDateTime dateTime): base(options)
+            IDateTime dateTime) : base(options, operationalStoreOptions)
         {
             _currentUserService = currentUserService;
             _dateTime = dateTime;
         }
-
-        #region DbSets
-        public DbSet<Color> Color { get; set; }
-        public DbSet<Customer> Customer { get; set; }
-        public DbSet<DeliveryProvider> DeliveryProvider { get; set; }
-        public DbSet<Order> Order { get; set; }
-        public DbSet<OrderLineItem> OrderLineItem { get; set; }
-        public DbSet<PaymentProvider> PaymentProvider { get; set; }
-        public DbSet<Picture> Picture { get; set; }
-        public DbSet<Product> Product { get; set; }
-        public DbSet<ProductCategory> ProductCategory { get; set; }
-        public DbSet<ProductReview> ProductReview { get; set; }
-        public DbSet<ProductSubCategory> ProductSubCategory { get; set; }
-        public DbSet<ProductSize> ProductSize { get; set; }
-        public DbSet<Vendor> Vendor { get; set; }
-        public DbSet<VendorCategory> VendorCategory { get; set; }
-        public DbSet<VendorSubCategory> VendorSubCategory { get; set; }
-        public DbSet<MenuItem> MenuItem { get; set; }
-        #endregion
 
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new CancellationToken())
         {
@@ -124,39 +104,32 @@ namespace OmniMasterFX.Infrastructure.Persistence
                 }
             }
         }
-
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-
-            // FK delete behaviors for categories
-            builder.Entity<ProductSubCategory>()
-                .HasOne(pc => pc.ProductCategory)
-                .WithMany(psc => psc.ProductSubCategories)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            builder.Entity<VendorSubCategory>()
-                .HasOne(vc => vc.VendorCategory)
-                .WithMany(vsc => vsc.VendorSubCategories)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            base.OnModelCreating(builder);
-        }
     }
 
-    public class ApplicationDbFactoryContext : IDesignTimeDbContextFactory<ApplicationDbContext>
+    public class OperationalStoreOptionsMigrations : IOptions<OperationalStoreOptions>
     {
-        public ApplicationDbContext CreateDbContext(string[] args)
+        public OperationalStoreOptions Value => new OperationalStoreOptions()
+        {
+            DeviceFlowCodes = new TableConfiguration("DeviceCodes"),
+            EnableTokenCleanup = false,
+            PersistedGrants = new TableConfiguration("PersistedGrants"),
+            TokenCleanupBatchSize = 100,
+            TokenCleanupInterval = 3600,
+        };
+    }
+    public class AuthDbFactoryContext : IDesignTimeDbContextFactory<AuthDbContext>
+    {
+        public AuthDbContext CreateDbContext(string[] args)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile(Directory.GetCurrentDirectory() + "/../WebUI/appsettings.json")
                 .Build();
 
-            var optionsBuilder = new DbContextOptionsBuilder<ApplicationDbContext>();
-            optionsBuilder.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+            var optionsBuilder = new DbContextOptionsBuilder<AuthDbContext>();
+            optionsBuilder.UseSqlServer(configuration.GetConnectionString("AuthConnection"));
 
-            return new ApplicationDbContext(optionsBuilder.Options);
+            return new AuthDbContext(optionsBuilder.Options, new OperationalStoreOptionsMigrations());
         }
     }
 }

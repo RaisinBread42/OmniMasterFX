@@ -1,12 +1,16 @@
 
 # To add a new migration
-Add-Migration -Name <name> -context ApplicationDbContext
+Add-Migration Initial -Context ApplicationDbContext -o Migrations/<folder-name> -Verbose
+
 
 # to update database to latest migration
-Update-Database
+Update-Database -Context AuthDbContext -Verbose
+Update-Database -Context ApplicationDbContext -Verbose
+
 
 # roll back to specified target migration
 Update-Database --context <ApplicationDbContext or AuthetnucationDbContext> <migration name>
+
 
 # script migrations
 Script-Migration <name>

@@ -24,5 +24,8 @@ namespace OmniMasterFX.Application.Common.Interfaces
         DbSet<VendorSubCategory> VendorSubCategory { get; set; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+        Task BeginTransactionAsync();
+        Task CommitTransactionAsync();
+        void RollbackTransaction();
     }
 }

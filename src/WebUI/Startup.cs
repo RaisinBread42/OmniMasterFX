@@ -38,23 +38,16 @@ namespace OmniMasterFX.WebUI
             services.AddHostFiltering(options => options.AllowedHosts = new string[] { "*" }.ToList());
             // Add framework services.
             services.AddMvc(options => options.EnableEndpointRouting = false);
-
             // Adds a default in-memory implementation of IDistributedCache.
             services.AddDistributedMemoryCache();
-
             services.AddScoped<ICurrentUserService, CurrentUserService>();
-
             services.AddHttpContextAccessor();
-
             services.AddHealthChecks()
                 .AddDbContextCheck<ApplicationDbContext>();
-
             services.AddControllersWithViews(options => 
                 options.Filters.Add(new ApiExceptionFilter()));
-
             services.AddRazorPages()
             .AddNewtonsoftJson();
-
             // Customise default API behaviour
             services.Configure<ApiBehaviorOptions>(options =>
             {
@@ -83,6 +76,7 @@ namespace OmniMasterFX.WebUI
 
             services.AddInfrastructure(Configuration);
             services.AddApplication();
+            services.AddAuthentication();
             services.AddAuthenticationService(Configuration);
         }
 
@@ -115,16 +109,15 @@ namespace OmniMasterFX.WebUI
                 settings.DocumentPath = "/api/specification.json";
             });
 
-            app.UseRouting();
-            //app.UseAuthorization();
             app.UseAuthentication();
-            //app.UseIdentityServer();
+            app.UseAuthorization();
+            app.UseIdentityServer();
+            app.UseRouting();
             app.UseMvc(endpoints =>
             {
                 endpoints.MapRoute(
                     name: "default",
                     template: "{controller}/{action=Index}/{id?}");
-                //endpoints.MapRazorPages();
             });
 
             app.UseHostFiltering();
